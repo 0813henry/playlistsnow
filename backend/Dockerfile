@@ -9,8 +9,11 @@ RUN npm ci
 
 COPY . .
 
+#usa npx para evitar problemas de permisos
+RUN npx babel src -d dist
+
 # Compila TypeScript
-RUN npm run build
+RUN chmod +x ./node_modules/.bin/*
 
 # Etapa de producción
 FROM node:22.18.0-alpine AS production
@@ -30,4 +33,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
