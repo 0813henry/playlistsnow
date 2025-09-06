@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
+RUN chmod +x ./node_modules/.bin/*
 
 COPY . .
 RUN npm run build
