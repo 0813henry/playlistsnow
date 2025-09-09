@@ -1,24 +1,33 @@
 import React from "react";
 
-function SongList({ songs, onDeleteSong }) {
+function SongList({ songs }) {
   if (songs.length === 0) {
-    return <p>No hay canciones en la playlist aún. ¡Agrega una!</p>;
+    return (
+      <div className="empty-state">
+        <h2>🎵 Lista de Canciones</h2>
+        <p>No hay canciones aún. ¡Agrega la primera canción!</p>
+      </div>
+    );
   }
 
   return (
     <div className="song-list">
-      <h2>Playlist Actual</h2>
-      {songs.map((song) => (
-        <div key={song.id} className="song-item">
-          <div className="song-info">
-            <h3>{song.title}</h3>
-            <p>Por {song.artist}</p>
+      <h2>🎵 Lista de Canciones ({songs.length})</h2>
+      <div className="songs-grid">
+        {songs.map((song) => (
+          <div key={song._id || song.id} className="song-card">
+            <div className="song-info">
+              <h3 className="song-title">{song.title}</h3>
+              <p className="song-artist">🎤 {song.artist}</p>
+              {song.createdAt && (
+                <p className="song-date">
+                  📅 {new Date(song.createdAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
           </div>
-          <button className="delete-btn" onClick={() => onDeleteSong(song.id)}>
-            Eliminar
-          </button>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

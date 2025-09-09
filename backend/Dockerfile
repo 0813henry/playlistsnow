@@ -43,9 +43,14 @@ RUN npm ci --only=production
 # Copia los archivos compilados
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 
+# Instalar wget para healthcheck
+USER root
+RUN apk add --no-cache wget
+USER nextjs
 
 # Expone el puerto 8080
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
+CMD ["npm", "start"]
 CMD ["node", "dist/index.js"]

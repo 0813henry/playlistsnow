@@ -7,96 +7,51 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('Connected to MongoDB Atlas');
+})
+.catch((error) => {
+  console.error('Error connecting to MongoDB:', error);
+  process.exit(1);
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// MongoDB Atlas connection
-const connectDB = async () => {
-  try {
-    if (process.env.MONGODB_URI) {
-      await mongoose.connect(process.env.MONGODB_URI);
-      console.log("✅ Conectado a MongoDB Atlas");
-    } else {
-      console.log("⚠️  No se encontró MONGODB_URI, usando datos en memoria");
-    }
-  } catch (error) {
-    console.error("❌ Error conectando a MongoDB:", error.message);
-    console.log("⚠️  Continuando con datos en memoria");
-  }
-};
+// Import routes
+const playlistRoutes = require('./routes/playlistRoutes');
 
-// Song Schema for MongoDB
-const songSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  artist: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
-const Song = mongoose.model("Song", songSchema);
-
-// In-memory data store (for fallback)
-let songs = [
-  { id: 1, title: "Bohemian Rhapsody", artist: "Queen" },
-  { id: 2, title: "Hotel California", artist: "Eagles" },
-  { id: 3, title: "Stairway to Heaven", artist: "Led Zeppelin" },
-];
+// Use routes
+app.use('/api', playlistRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
-  const mongoStatus =
-    mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    mongodb: mongoStatus,
-  });
+  res.json({ status: "ok" });
 });
 
 // Get all songs
-app.get("/api/songs", async (req, res) => {
-  try {
-    if (mongoose.connection.readyState === 1) {
-      // Use MongoDB
-      const mongoSongs = await Song.find().sort({ createdAt: -1 });
-      res.json(mongoSongs);
-    } else {
-      // Use in-memory data
-      res.json(songs);
-    }
-  } catch (error) {
-    console.error("Error getting songs:", error);
-    res.status(500).json({ error: "Error al obtener canciones" });
-  }
+app.get("/api/songs", (req, res) => {
+  res.json(songs);
 });
 
 // Create a new song
-app.post("/api/songs", async (req, res) => {
+app.post("/api/songs", (req, res) => {
   const { title, artist } = req.body;
-
   if (!title || !artist) {
     return res.status(400).json({ error: "Título y artista son requeridos" });
   }
-
-  try {
-    if (mongoose.connection.readyState === 1) {
-      // Use MongoDB
-      const newSong = new Song({ title, artist });
-      const savedSong = await newSong.save();
-      res.status(201).json(savedSong);
-    } else {
-      // Use in-memory data
-      const id =
-        songs.length > 0 ? Math.max(...songs.map((song) => song.id)) + 1 : 1;
-      const newSong = { id, title, artist };
-      songs.push(newSong);
-      res.status(201).json(newSong);
-    }
-  } catch (error) {
-    console.error("Error creating song:", error);
-    res.status(500).json({ error: "Error al crear canción" });
-  }
+  const id =
+    songs.length > 0 ? Math.max(...songs.map((song) => song.id)) + 1 : 1;
+  const newSong = { id, title, artist };
+  songs.push(newSong);
+  res.status(201).json(newSong);
 });
 
 // Delete a song
@@ -217,15 +172,43 @@ app.delete("/api/playlists/:id", (req, res) => {
   res.status(200).json({ message: "Playlist deleted successfully" });
 });
 
+// Add song to playlist
+app.post("/api/playlists/:id/songs", (req, res) => {
+  const playlistId = parseInt(req.params.id);
+  const { songId } = req.body;
+
+  const playlist = playlists.find((p) => p.id === playlistId);
+  if (!playlist) {
+    return res.status(404).json({ error: "Playlist not found" });
+  }
+
+  const song = songs.find((s) => s.id === songId);
+  if (!song) {
+    return res.status(404).json({ error: "Song not found" });
+  }
+
+  if (!playlist.songs.includes(songId)) {
+    playlist.songs.push(songId);
+  }
+
+  res.json(playlist);
+});
+
+// Remove song from playlist
+app.delete("/api/playlists/:id/songs/:songId", (req, res) => {
+  const playlistId = parseInt(req.params.id);
+  const songId = parseInt(req.params.songId);
+
+  const playlist = playlists.find((p) => p.id === playlistId);
+  if (!playlist) {
+    return res.status(404).json({ error: "Playlist not found" });
+  }
+
+  playlist.songs = playlist.songs.filter((id) => id !== songId);
+  res.json(playlist);
+});
+
 // Start server
-const startServer = async () => {
-  await connectDB();
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`🎵 API Songs: http://localhost:${PORT}/api/songs`);
-  });
-};
-
-startServer().catch(console.error);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Backend is running on port ${PORT}`);
+});
