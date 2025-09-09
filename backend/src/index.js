@@ -43,6 +43,16 @@ let songs = [
   { id: 3, title: "Stairway to Heaven", artist: "Led Zeppelin" },
 ];
 
+let playlists = [
+  {
+    id: 1,
+    name: "Rock Classics",
+    description: "The best rock songs of all time",
+    songs: [1, 2, 3],
+    createdAt: new Date(),
+  },
+];
+
 // Health check
 app.get("/api/health", (req, res) => {
   const mongoStatus =

@@ -37,7 +37,7 @@ exports.updateSong = async (req, res) => {
   try {
     const { title, artist } = req.body;
     const song = await Song.findById(req.params.id);
-    
+
     if (!song) {
       return res.status(404).json({ error: "Song not found" });
     }
@@ -77,7 +77,9 @@ exports.deleteSong = async (req, res) => {
 // Get all playlists
 exports.getAllPlaylists = async (req, res) => {
   try {
-    const playlists = await Playlist.find().populate('songs').sort({ createdAt: -1 });
+    const playlists = await Playlist.find()
+      .populate("songs")
+      .sort({ createdAt: -1 });
     res.status(200).json(playlists);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -87,13 +89,13 @@ exports.getAllPlaylists = async (req, res) => {
 // Get a single playlist
 exports.getPlaylistById = async (req, res) => {
   try {
-    const playlist = await Playlist.findById(req.params.id).populate('songs');
+    const playlist = await Playlist.findById(req.params.id).populate("songs");
     if (!playlist) {
       return res.status(404).json({ message: "Playlist not found" });
     }
     res.status(200).json({
       ...playlist.toObject(),
-      songsDetails: playlist.songs
+      songsDetails: playlist.songs,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -126,7 +128,7 @@ exports.updatePlaylist = async (req, res) => {
   try {
     const { name, description } = req.body;
     const playlist = await Playlist.findById(req.params.id);
-    
+
     if (!playlist) {
       return res.status(404).json({ message: "Playlist not found" });
     }
@@ -175,7 +177,9 @@ exports.addSongToPlaylist = async (req, res) => {
       await playlist.save();
     }
 
-    const updatedPlaylist = await Playlist.findById(req.params.id).populate('songs');
+    const updatedPlaylist = await Playlist.findById(req.params.id).populate(
+      "songs"
+    );
     res.json(updatedPlaylist);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -191,11 +195,13 @@ exports.removeSongFromPlaylist = async (req, res) => {
     }
 
     playlist.songs = playlist.songs.filter(
-      songId => songId.toString() !== req.params.songId
+      (songId) => songId.toString() !== req.params.songId
     );
     await playlist.save();
 
-    const updatedPlaylist = await Playlist.findById(req.params.id).populate('songs');
+    const updatedPlaylist = await Playlist.findById(req.params.id).populate(
+      "songs"
+    );
     res.json(updatedPlaylist);
   } catch (error) {
     res.status(500).json({ message: error.message });

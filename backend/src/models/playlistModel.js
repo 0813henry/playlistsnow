@@ -1,16 +1,5 @@
 const mongoose = require("mongoose");
 
-const songSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  artist: {
-    type: String,
-    required: true,
-  },
-});
-
 const playlistSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -19,7 +8,12 @@ const playlistSchema = new mongoose.Schema({
   description: {
     type: String,
   },
-  songs: [songSchema],
+  songs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Song",
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
