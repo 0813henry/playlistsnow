@@ -1,36 +1,51 @@
 services:
-
-  # mongo-db:
-  #   image: mongo:6.0.6
-  #   restart: always
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: mern_user
-  #     MONGO_INITDB_ROOT_PASSWORD: israelFovLoVert
-  #   volumes:
-  #     - ./DevOps-Proyect-Bakend/mongo:/data/db
-  #   ports:
-  #     - "27017:27017"
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin || exit 1"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: backend
+    image: playlistsnow-backend
+    container_name: playlistsnow-backend
     ports:
       - "8080:8080"
+    environment:
+      - PORT=8080
+      - MONGODB_URI=mongodb+srv://playlistsnow:playlistsnow@playlistsnow.meiecfs.mongodb.net/playlistsnow?retryWrites=true&w=majority
+    networks:
+      - playlistsnow-network
     restart: unless-stopped
-
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: frontend
+    image: playlistsnow-frontend
+    container_name: playlistsnow-frontend
     ports:
       - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080/api
+    networks:
+      - playlistsnow-network
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  playlistsnow-network:
+    driver: bridge
+    name: playlistsnow-network
