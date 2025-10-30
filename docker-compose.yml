@@ -9,7 +9,13 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - MONGODB_URI=mongodb+srv://playlistsnow:playlistsnow@playlistsnow.meiecfs.mongodb.net/playlistsnow?retryWrites=true&w=majority
+      - DB_USER_FILE=/run/secrets/db_user
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_CLUSTER=playlistsnow.meiecfs.mongodb.net
+      - DB_NAME=playlistsnow
+    secrets:
+      - db_user
+      - db_password
     networks:
       - playlistsnow-network
     restart: unless-stopped
@@ -49,3 +55,9 @@ networks:
   playlistsnow-network:
     driver: bridge
     name: playlistsnow-network
+
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt

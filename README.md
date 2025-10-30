@@ -60,7 +60,34 @@ playlistsnow/
 └── README.md                # Este archivo
 ```
 
-## 🚀 Requisitos Previos
+## ⚙️ Configuración Inicial
+
+Antes de ejecutar el proyecto, necesitas configurar las credenciales de la base de datos usando Docker Secrets:
+
+1. Crea los archivos de credenciales:
+
+   ```bash
+   # En Linux/macOS
+   mkdir -p secrets
+   echo "tu_usuario_mongodb" > secrets/db_user.txt
+   echo "tu_password_mongodb" > secrets/db_password.txt
+
+   # En Windows PowerShell
+   New-Item -ItemType Directory -Force -Path secrets
+   "tu_usuario_mongodb" | Out-File -FilePath secrets/db_user.txt -Encoding UTF8 -NoNewline
+   "tu_password_mongodb" | Out-File -FilePath secrets/db_password.txt -Encoding UTF8 -NoNewline
+   ```
+
+2. O copia los archivos de ejemplo:
+   ```bash
+   cp secrets/db_user.txt.example secrets/db_user.txt
+   cp secrets/db_password.txt.example secrets/db_password.txt
+   # Luego edita los archivos con las credenciales reales
+   ```
+
+**Nota**: La carpeta `secrets/` está en `.gitignore` por seguridad. Todos los desarrolladores usarán las mismas credenciales pero nunca se subirán a Git.
+
+## 🚀 Cómo ejecutar el proyecto
 
 Antes de empezar, asegúrate de tener instalado:
 

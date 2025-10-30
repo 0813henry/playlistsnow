@@ -1,56 +1,27 @@
-FROM node:22.18.0-alpine AS builder
-
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-WORKDIR /app
-
-# Cambiar propietario del directorio
-RUN chown -R nextjs:nodejs /app
-
-# Cambiar a usuario no-root
-USER nextjs
-
-COPY --chown=nextjs:nodejs package*.json ./
-
-# Instala todas las dependencias
-RUN npm ci
-
-COPY --chown=nextjs:nodejs . .
-
-# Usa npm run build en lugar de npx babel directamente
-RUN npm run build
-
-# Etapa de producción
-FROM node:22.18.0-alpine AS production
-
-# Crear el mismo usuario en producción
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-WORKDIR /app
-
-RUN chown -R nextjs:nodejs /app
-
-USER nextjs
-
-COPY --chown=nextjs:nodejs package*.json ./
-
-# Instala solo dependencias de producción
-RUN npm ci --only=production
-
-# Copia los archivos compilados
-COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+FROM node:18-alpine
 
 # Instalar wget para healthcheck
-USER root
 RUN apk add --no-cache wget
-USER nextjs
 
-# Expone el puerto 8080
+# Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeapp -u 1001 -G nodejs
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código fuente
+COPY . .
+
+# Cambiar ownership y usuario
+RUN chown -R nodeapp:nodejs /app
+USER nodeapp
+
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
-CMD ["npm", "start"]
-CMD ["node", "dist/index.js"]
+CMD ["node", "src/index.js"]

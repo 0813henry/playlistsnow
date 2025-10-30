@@ -12,14 +12,53 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// MongoDB Atlas connection
+// MongoDB Atlas connection with Docker Secrets
+const fs = require("fs");
+
+const readSecret = (filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath, "utf8").trim();
+    }
+  } catch (error) {
+    console.error(`Error reading secret from ${filePath}:`, error.message);
+  }
+  return null;
+};
+
 const connectDB = async () => {
   try {
-    if (process.env.MONGODB_URI) {
-      await mongoose.connect(process.env.MONGODB_URI);
+    let mongoUri;
+
+    // Try to read from Docker secrets first
+    const dbUserFile = process.env.DB_USER_FILE;
+    const dbPasswordFile = process.env.DB_PASSWORD_FILE;
+    const dbCluster = process.env.DB_CLUSTER;
+    const dbName = process.env.DB_NAME;
+
+    if (dbUserFile && dbPasswordFile && dbCluster && dbName) {
+      const username = readSecret(dbUserFile);
+      const password = readSecret(dbPasswordFile);
+
+      if (username && password) {
+        mongoUri = `mongodb+srv://${username}:${password}@${dbCluster}/${dbName}?retryWrites=true&w=majority`;
+        console.log("✅ Usando credenciales de Docker Secrets");
+      }
+    }
+
+    // Fallback to environment variable
+    if (!mongoUri && process.env.MONGODB_URI) {
+      mongoUri = process.env.MONGODB_URI;
+      console.log("✅ Usando MONGODB_URI de variable de entorno");
+    }
+
+    if (mongoUri) {
+      await mongoose.connect(mongoUri);
       console.log("✅ Conectado a MongoDB Atlas");
     } else {
-      console.log("⚠️  No se encontró MONGODB_URI, usando datos en memoria");
+      console.log(
+        "⚠️  No se encontraron credenciales de DB, usando datos en memoria"
+      );
     }
   } catch (error) {
     console.error("❌ Error conectando a MongoDB:", error.message);
