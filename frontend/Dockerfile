@@ -1,33 +1,30 @@
 # Etapa de build
-FROM node:22.18.0-alpine AS builder
-
-# Instalar dependencias del sistema que pueden necesitarse
-RUN apk add --no-cache python3 make g++
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Copiar archivos de dependencias
 COPY package*.json ./
+
+# Instalar dependencias
 RUN npm ci --only=production=false
 
+# Copiar código fuente
 COPY . .
 
-# Asegurar permisos de ejecución para scripts de npm
-RUN chmod +x ./node_modules/.bin/*
-
-# Variables de entorno para el build
+# Build de la aplicación
 ENV NODE_ENV=production
 ENV GENERATE_SOURCEMAP=false
-
 RUN npm run build
 
-# Etapa de producción: servir archivos estáticos con nginx
+# Etapa de producción
 FROM nginx:1.25-alpine
 
-# Copia el build de React al directorio de nginx
+# Copiar build de React
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Copia configuración personalizada de nginx si la tienes
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Copiar configuración de nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
