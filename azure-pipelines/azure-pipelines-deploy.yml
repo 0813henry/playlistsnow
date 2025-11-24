@@ -1,0 +1,16 @@
+trigger: none
+
+pool:
+  name: "playlistsnow-pool"
+
+stages:
+  - stage: Deploy
+    jobs:
+      - job: DeployToK8s
+        steps:
+          - script: |
+              ansible-playbook -i hosts update-pods.yml
+            displayName: "Actualizar pods en Kubernetes via Ansible"
+            # O usa tu script personalizado:
+            # ./deploy_k8s.sh
+            # displayName: "Desplegar en Kubernetes via script"

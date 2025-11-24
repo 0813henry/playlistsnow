@@ -1,0 +1,10 @@
+---
+- name: Actualizar backend en Minikube
+  hosts: minikube
+  tasks:
+    - name: Aplicar manifiestos de Kubernetes (backend)
+      kubernetes.core.k8s:
+        kubeconfig: ~/.kube/config
+        state: present
+        src: ../../k8s/deployment.yaml
+      become: false
