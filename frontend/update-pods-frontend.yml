@@ -1,0 +1,10 @@
+---
+- name: Actualizar frontend en Minikube
+  hosts: minikube
+  tasks:
+    - name: Aplicar manifiesto de Kubernetes (frontend)
+      kubernetes.core.k8s:
+        kubeconfig: ~/.kube/config
+        state: present
+        src: ../../k8s/frontend-deployment.yaml
+      become: false

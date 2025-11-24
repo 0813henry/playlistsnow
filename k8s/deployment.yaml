@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-hello
-  namespace: upc-devops
+  namespace: default
   labels:
     app: web-hello
 spec:
