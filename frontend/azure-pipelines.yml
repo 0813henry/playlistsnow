@@ -1,0 +1,59 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - "*"
+
+pool:
+  name: "playlistsnow-pool"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndPush
+        steps:
+          - checkout: self
+
+          # 🔑 Necesario para evitar "push access denied"
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: dockerhub-playlistsnow
+
+          # SonarQube Prepare
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: "sonarqube-playlistsnow-frontend"
+              scannerMode: "CLI"
+              configMode: "manual"
+              cliProjectKey: "playlistsnow_frontend_1e849f14-8192-4f9f-930f-d6eff6a71ab1"
+              cliProjectName: "PlaylistsNow Frontend"
+              cliSources: "src"
+
+          # Instalar dependencias y correr tests con cobertura
+          - script: |
+              npm install
+              npm test -- --coverage
+            displayName: "Run Tests"
+
+          - task: SonarQubeAnalyze@5
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: "300"
+
+          # Build and Push Docker Image
+          - task: Docker@2
+            displayName: Build and Push Docker Image
+            inputs:
+              command: buildAndPush
+              containerRegistry: dockerhub-playlistsnow
+              repository: hjpertuz/playlistsnow-frontend
+              dockerfile: Dockerfile
+              buildContext: .
+              tags: |
+                $(Build.BuildId)
+                latest

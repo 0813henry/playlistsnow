@@ -1,0 +1,27 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - backend/*
+
+pool:
+  name: "playlistsnow-pool"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndPush
+        steps:
+          - task: Docker@2
+            displayName: Build and Push Docker Image
+            inputs:
+              command: "buildAndPush"
+              repository: "playlistsnow-backend"
+              Dockerfile: "backend/Dockerfile"
+              buildContext: "backend"
+              containerRegistry: "dockerhub-playlistsnow"
+              tags: |
+                $(Build.BuildId)
+                latest
