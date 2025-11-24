@@ -1,0 +1,27 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - frontend/*
+
+pool:
+  name: "playlistsnow-pool" # O el nombre de tu Agent Pool
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndPush
+        steps:
+          - task: Docker@2
+            displayName: Build and Push Docker Image
+            inputs:
+              command: "buildAndPush"
+              repository: "playlistsnow-frontend"
+              Dockerfile: "frontend/Dockerfile"
+              buildContext: "frontend"
+              containerRegistry: "dockerhub-playlistsnow" # Cambia por el nombre de tu Service Connection si es diferente
+              tags: |
+                $(Build.BuildId)
+                latest

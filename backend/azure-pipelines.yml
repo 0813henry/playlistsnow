@@ -1,0 +1,60 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - "*"
+
+pool:
+  name: "playlistsnow-pool"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndPush
+        steps:
+          - checkout: self
+
+          # 🔑 Login a Docker Hub
+          - task: Docker@2
+            displayName: Login to Docker Hub
+            inputs:
+              command: login
+              containerRegistry: dockerhub-playlistsnow
+
+          # SonarQube Prepare
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: "sonarqube-playlistsnow-backend"
+              scannerMode: "CLI"
+              configMode: "manual"
+              cliProjectKey: "PlaylistsNow-Backend"
+              cliProjectName: "PlaylistsNow Backend"
+              cliSources: "src"
+
+          # Instalar dependencias y correr tests con cobertura
+          - script: |
+              npm install
+              npm test -- --coverage
+            displayName: "Run Tests"
+
+          - task: SonarQubeAnalyze@5
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: "300"
+
+          # Build and Push Docker Image
+          - task: Docker@2
+            displayName: Build and Push Docker Image
+            inputs:
+              command: buildAndPush
+              containerRegistry: dockerhub-playlistsnow
+              repository: hjpertuz/playlistsnow-backend
+              dockerfile: Dockerfile
+              buildContext: .
+              tags: |
+                $(Build.BuildId)
+                latest
