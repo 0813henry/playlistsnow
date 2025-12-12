@@ -25,7 +25,7 @@ spec:
             - name: APP_NAME
               value: "upc-devops"
             - name: REACT_APP_API_URL
-              value: "http://127.0.0.1:56526/api" ## cambiar por backend
+              value: "http://backend:8080/api" ## cambiar por backend
           resources:
             requests:
               cpu: 100m
